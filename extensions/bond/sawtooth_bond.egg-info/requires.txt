@@ -1,0 +1,4 @@
+sawtooth-core
+colorlog
+pybitcointools
+beautifulsoup4

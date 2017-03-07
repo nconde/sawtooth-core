@@ -1,0 +1,704 @@
+
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Coverage report</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+    
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.ba-throttle-debounce.min.js"></script>
+    <script type="text/javascript" src="jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="jquery.hotkeys.js"></script>
+    <script type="text/javascript" src="coverage_html.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(coverage.index_ready);
+    </script>
+</head>
+<body class="indexfile">
+
+<div id="header">
+    <div class="content">
+        <h1>Coverage report:
+            <span class="pc_cov">0%</span>
+        </h1>
+
+        <img id="keyboard_icon" src="keybd_closed.png" alt="Show keyboard shortcuts" />
+
+        <form id="filter_container">
+            <input id="filter" type="text" value="" placeholder="filter..." />
+        </form>
+    </div>
+</div>
+
+<div class="help_panel">
+    <img id="panel_icon" src="keybd_open.png" alt="Hide keyboard shortcuts" />
+    <p class="legend">Hot-keys on this page</p>
+    <div>
+    <p class="keyhelp">
+        <span class="key">n</span>
+        <span class="key">s</span>
+        <span class="key">m</span>
+        <span class="key">x</span>
+        
+        <span class="key">b</span>
+        <span class="key">p</span>
+        
+        <span class="key">c</span> &nbsp; change column sorting
+    </p>
+    </div>
+</div>
+
+<div id="index">
+    <table class="index">
+        <thead>
+            
+            <tr class="tablehead" title="Click to sort">
+                <th class="name left headerSortDown shortkey_n">Module</th>
+                <th class="shortkey_s">statements</th>
+                <th class="shortkey_m">missing</th>
+                <th class="shortkey_x">excluded</th>
+                
+                <th class="shortkey_b">branches</th>
+                <th class="shortkey_p">partial</th>
+                
+                <th class="right shortkey_c">coverage</th>
+            </tr>
+        </thead>
+        
+        <tfoot>
+            <tr class="total">
+                <td class="name left">Total</td>
+                <td>5090</td>
+                <td>5090</td>
+                <td>0</td>
+                
+                <td>1350</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 6440">0%</td>
+            </tr>
+        </tfoot>
+        <tbody>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth___init___py.html">sawtooth/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli___init___py.html">sawtooth/cli/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_py.html">sawtooth/cli/admin.py</a></td>
+                <td>28</td>
+                <td>28</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 36">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub___init___py.html">sawtooth/cli/admin_sub/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub_clean_py.html">sawtooth/cli/admin_sub/clean.py</a></td>
+                <td>76</td>
+                <td>76</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 108">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub_dev_mode_genesis_py.html">sawtooth/cli/admin_sub/dev_mode_genesis.py</a></td>
+                <td>57</td>
+                <td>57</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 63">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub_genesis_common_py.html">sawtooth/cli/admin_sub/genesis_common.py</a></td>
+                <td>49</td>
+                <td>49</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 67">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub_permissioned_validator_registry_py.html">sawtooth/cli/admin_sub/permissioned_validator_registry.py</a></td>
+                <td>52</td>
+                <td>52</td>
+                <td>0</td>
+                
+                <td>10</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 62">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_admin_sub_poet1_genesis_py.html">sawtooth/cli/admin_sub/poet1_genesis.py</a></td>
+                <td>68</td>
+                <td>68</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 74">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_block_py.html">sawtooth/cli/block.py</a></td>
+                <td>74</td>
+                <td>74</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 98">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_cluster_py.html">sawtooth/cli/cluster.py</a></td>
+                <td>303</td>
+                <td>303</td>
+                <td>0</td>
+                
+                <td>102</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 405">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_exceptions_py.html">sawtooth/cli/exceptions.py</a></td>
+                <td>3</td>
+                <td>3</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 3">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_keygen_py.html">sawtooth/cli/keygen.py</a></td>
+                <td>61</td>
+                <td>61</td>
+                <td>0</td>
+                
+                <td>26</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 87">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_main_py.html">sawtooth/cli/main.py</a></td>
+                <td>110</td>
+                <td>110</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 148">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_monitor_py.html">sawtooth/cli/monitor.py</a></td>
+                <td>150</td>
+                <td>150</td>
+                <td>0</td>
+                
+                <td>40</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 190">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_monitor_lib___init___py.html">sawtooth/cli/monitor_lib/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_monitor_lib_monitor_modules_py.html">sawtooth/cli/monitor_lib/monitor_modules.py</a></td>
+                <td>186</td>
+                <td>186</td>
+                <td>0</td>
+                
+                <td>20</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 206">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_py.html">sawtooth/cli/stats.py</a></td>
+                <td>145</td>
+                <td>145</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 177">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib___init___py.html">sawtooth/cli/stats_lib/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_endpoint_manager_py.html">sawtooth/cli/stats_lib/endpoint_manager.py</a></td>
+                <td>40</td>
+                <td>40</td>
+                <td>0</td>
+                
+                <td>6</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 46">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_fork_detect_py.html">sawtooth/cli/stats_lib/fork_detect.py</a></td>
+                <td>511</td>
+                <td>511</td>
+                <td>0</td>
+                
+                <td>144</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 655">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_platform_stats_py.html">sawtooth/cli/stats_lib/platform_stats.py</a></td>
+                <td>62</td>
+                <td>62</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 62">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_print_views_py.html">sawtooth/cli/stats_lib/print_views.py</a></td>
+                <td>189</td>
+                <td>189</td>
+                <td>0</td>
+                
+                <td>14</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 203">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_stats_print_py.html">sawtooth/cli/stats_lib/stats_print.py</a></td>
+                <td>124</td>
+                <td>124</td>
+                <td>0</td>
+                
+                <td>28</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 152">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_stats_utils_py.html">sawtooth/cli/stats_lib/stats_utils.py</a></td>
+                <td>200</td>
+                <td>200</td>
+                <td>0</td>
+                
+                <td>56</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 256">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_stats_writers_py.html">sawtooth/cli/stats_lib/stats_writers.py</a></td>
+                <td>217</td>
+                <td>217</td>
+                <td>0</td>
+                
+                <td>50</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 267">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_topology_stats_py.html">sawtooth/cli/stats_lib/topology_stats.py</a></td>
+                <td>144</td>
+                <td>144</td>
+                <td>0</td>
+                
+                <td>40</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 184">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_stats_lib_validator_stats_py.html">sawtooth/cli/stats_lib/validator_stats.py</a></td>
+                <td>221</td>
+                <td>221</td>
+                <td>0</td>
+                
+                <td>24</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 245">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_store_py.html">sawtooth/cli/store.py</a></td>
+                <td>36</td>
+                <td>36</td>
+                <td>0</td>
+                
+                <td>8</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 44">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_submit_py.html">sawtooth/cli/submit.py</a></td>
+                <td>66</td>
+                <td>66</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 84">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_cli_transaction_py.html">sawtooth/cli/transaction.py</a></td>
+                <td>118</td>
+                <td>118</td>
+                <td>0</td>
+                
+                <td>56</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 174">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_client_py.html">sawtooth/client.py</a></td>
+                <td>342</td>
+                <td>342</td>
+                <td>0</td>
+                
+                <td>110</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 452">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_config_py.html">sawtooth/config.py</a></td>
+                <td>116</td>
+                <td>116</td>
+                <td>0</td>
+                
+                <td>44</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 160">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_endpoint_client_py.html">sawtooth/endpoint_client.py</a></td>
+                <td>8</td>
+                <td>8</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 8">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_exceptions_py.html">sawtooth/exceptions.py</a></td>
+                <td>19</td>
+                <td>19</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 19">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage___init___py.html">sawtooth/manage/__init__.py</a></td>
+                <td>1</td>
+                <td>1</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 1">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_daemon_legacy_py.html">sawtooth/manage/daemon_legacy.py</a></td>
+                <td>134</td>
+                <td>134</td>
+                <td>0</td>
+                
+                <td>46</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 180">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_docker_py.html">sawtooth/manage/docker.py</a></td>
+                <td>181</td>
+                <td>181</td>
+                <td>0</td>
+                
+                <td>60</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 241">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_docker_legacy_py.html">sawtooth/manage/docker_legacy.py</a></td>
+                <td>141</td>
+                <td>141</td>
+                <td>0</td>
+                
+                <td>36</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 177">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_node_py.html">sawtooth/manage/node.py</a></td>
+                <td>57</td>
+                <td>57</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 57">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_simple_py.html">sawtooth/manage/simple.py</a></td>
+                <td>20</td>
+                <td>20</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 20">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_subproc_py.html">sawtooth/manage/subproc.py</a></td>
+                <td>65</td>
+                <td>65</td>
+                <td>0</td>
+                
+                <td>16</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 81">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_subproc_legacy_py.html">sawtooth/manage/subproc_legacy.py</a></td>
+                <td>117</td>
+                <td>117</td>
+                <td>0</td>
+                
+                <td>38</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 155">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_utils_py.html">sawtooth/manage/utils.py</a></td>
+                <td>29</td>
+                <td>29</td>
+                <td>0</td>
+                
+                <td>18</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 47">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_vnm_py.html">sawtooth/manage/vnm.py</a></td>
+                <td>18</td>
+                <td>18</td>
+                <td>0</td>
+                
+                <td>4</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 22">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_manage_wrap_py.html">sawtooth/manage/wrap.py</a></td>
+                <td>72</td>
+                <td>72</td>
+                <td>0</td>
+                
+                <td>30</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 102">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_simulator_py.html">sawtooth/simulator.py</a></td>
+                <td>147</td>
+                <td>147</td>
+                <td>0</td>
+                
+                <td>32</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 179">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_simulator_cli_py.html">sawtooth/simulator_cli.py</a></td>
+                <td>145</td>
+                <td>145</td>
+                <td>0</td>
+                
+                <td>66</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 211">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_simulator_workload_py.html">sawtooth/simulator_workload.py</a></td>
+                <td>32</td>
+                <td>32</td>
+                <td>0</td>
+                
+                <td>0</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 32">0%</td>
+            </tr>
+            
+            <tr class="file">
+                <td class="name left"><a href="sawtooth_validator_config_py.html">sawtooth/validator_config.py</a></td>
+                <td>151</td>
+                <td>151</td>
+                <td>0</td>
+                
+                <td>44</td>
+                <td>0</td>
+                
+                <td class="right" data-ratio="0 195">0%</td>
+            </tr>
+            
+        </tbody>
+    </table>
+
+    <p id="no_rows">
+        No items found using the specified filter.
+    </p>
+</div>
+
+<div id="footer">
+    <div class="content">
+        <p>
+            <a class="nav" href="https://coverage.readthedocs.io">coverage.py v4.3.4</a>,
+            created at 2017-02-17 23:22
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

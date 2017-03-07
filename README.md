@@ -1,34 +1,31 @@
-
-![Sawtooth Lake](images/sawtooth_logo_light_blue-small.png)  
-
 Sawtooth Lake
--------------
+=============
 
-Sawtooth Lake is an enterprise solution for building, deploying, and
-running distributed ledgers (also called blockchains). 
-It provides an extremely modular and flexible platform for implementing 
-transaction-based updates to shared state between
-untrusted parties coordinated by consensus algorithms.
+The Sawtooth Lake distributed ledger is a highly modular platform for building, deploying and
+running distributed ledgers.
 
-###Incubation Notice
+Incubation Notice
+=================
 
 This project is a Hyperledger project in _Incubation_. It was proposed to the 
 community and documented [here](http://bit.ly/1T6eVBH). Information on what 
-_Incubation_ entails can be found in the 
-[Hyperledger Project Lifecycle document](https://goo.gl/4edNRc).
+_Incubation_ entails can be found in the [Hyperledger Project Lifecycle document](https://goo.gl/4edNRc).
 
 Documentation
--------------
+=============
 
-The latest documentation for Sawtooth Lake is available within this repo in
-the [docs](docs) subdirectory.
+Documentation is available at: http://intelledger.github.io/.
 
-Documentation for our stable release is available at: 
-http://intelledger.github.io/.
+Contents
+========
 
-License
--------
+This repository contains many fundamental classes used in the distributed ledger system.
 
-Sawtooth Lake uses the [Apache License Version 2.0](LICENSE) software license.
+Security Notice
+===============
+This project is intended for experimental usage and is not secure.
+Do not use this project for security sensitive applications.
+Please see the
+[Introduction](http://intelledger.github.io/introduction.html)
+for more details.
 
-![Open Source Award Badge](images/rookies16-small.png)

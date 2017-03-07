@@ -43,6 +43,8 @@ paths:
                 $ref: "#/definitions/Link"
         400:
           $ref: "#/responses/400BadRequest"
+        422:
+          $ref: "#/responses/422UnprocessableEntity"
         500:
           $ref: "#/responses/500ServerError"
         503:
@@ -111,15 +113,13 @@ paths:
 
   /batch_status:
     get:
-      summary: Fetches the committed statuses for a set of batches
+      summary: Fetches a list of the committed statuses for a set of batches
       description: >
-        Fetches an object with a status for each batch requested. The keys of
-        the data object will be the ids of the batch(es), while the values will
-        be a string status with the values `'COMMITTED'`, `'INVALID'`,
-        `'PENDING'`, or `'UNKNOWN'`.
-        The batch(es) you want to check can be specified using the `id` filter
-        parameter. Note that as this route does not return a full resource, and
-        the response body will _not_ include the `head` or `paging` properties.
+        Fetches a list of statuses for a batch or batches. The
+        batch(es) you want to check can be specified using the
+        `id` filter parameter. Note that this route does not
+        return a full resource, and the response body will
+        _not_ include the `head` or `paging` properties.
       parameters:
         - name: id
           in: query
@@ -132,7 +132,9 @@ paths:
           schema:
             properties:
               data:
-                $ref: "#/definitions/BatchStatuses"
+                type: array
+                items:
+                  $ref: "#/definitions/BatchStatus"
               link:
                 $ref: "#/definitions/Link"
         400:
@@ -561,17 +563,6 @@ definitions:
         items:
           $ref: "#/definitions/Error"
 
-  BatchStatuses:
-    properties:
-      "{batch_id}":
-        type: string
-        example: PENDING
-        enum:
-          - COMMITTED
-          - INVALID
-          - PENDING
-          - UNKNOWN
-
   Leaf:
     properties:
       address:
@@ -658,6 +649,15 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Batch"
+  BatchStatus:
+    properties:
+      status:
+        type: string
+        example: PENDING
+        enum:
+          - PENDING
+          - REJECTED
+          - COMMITTED
 
   BlockHeader:
     properties:

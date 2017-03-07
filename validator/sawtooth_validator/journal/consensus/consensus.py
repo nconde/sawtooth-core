@@ -26,7 +26,7 @@ class BlockPublisherInterface(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, block_cache, state_view, batch_publisher):
+    def __init__(self, block_cache, state_view):
         """Initialize the object, is passed (read-only) state access objects.
             Args:
                 block_cache: Dict interface to the block cache. Any predecessor
@@ -35,57 +35,47 @@ class BlockPublisherInterface(metaclass=ABCMeta):
                 state_view: A read only view of state for the last committed
                 block in the chain. For the block publisher this is the block
                 we are building on top of.
-                batch_publisher: An interface implementing send(txn_list)
-                which wrap the transactions in a batch and broadcast that
-                batch to the network.
             Returns:
                 none.
         """
         pass
 
     @abstractmethod
-    def initialize_block(self, block_header):
+    def initialize_block(self, block):
         """Do initialization necessary for the consensus to claim a block,
         this may include initiating voting activities, starting proof of work
-        hash generation, or create a PoET wait timer. The block
-        is represented by a block_header since the full block will not be
-        built until the block is finalized.
+        hash generation, or create a PoET wait timer.
 
         Args:
-            block_header (BlockHeader): the BlockHeader to initialize.
+            block (Block): the block to initialize.
         Returns:
-            Boolean: True if the candidate block should be built. False if
-            no candidate should be built.
+            consensus: the serialized consensus data for the block header, this
+            can be temporary state data or None.
         """
         pass
 
     @abstractmethod
-    def check_publish_block(self, block_header):
-        """Check if a candidate block is ready to be claimed. The block
-        is represented by a block_header since the full block will not be
-        built until the block is finalized.
+    def check_publish_block(self, block):
+        """Check if a candidate block is ready to be claimed.
 
         Args:
-            block_header (BlockHeader): the block_header to be checked if it
-            should be claimed
+            block (Block): the block to be checked if it should be claimed
         Returns:
-            Boolean: True if the candidate block should be claimed. False if
-            the block is not ready to be claimed.
+            Boolean: True if the candidate block should be claimed.
         """
         pass
 
     @abstractmethod
-    def finalize_block(self, block_header):
-        """Finalize a block to be claimed. Update the
-        Block.block_header.consensus field with any data this consensus's
-        BlockVerifier needs to establish the validity of the block.
+    def finalize_block(self, block):
+        """Finalize a block to be claimed. Provide any signatures and
+        data updates that need to be applied to the block before it is
+        signed and broadcast to the network.
 
         Args:
-            block_header (BlockHeader): The candidate block that needs to be
-            finalized.
+            block (Block): The candidate block that needs to be finalized
+             by the consensus
         Returns:
-            Boolean: True if the candidate block good and should be generated.
-            False if the block should be abandoned.
+            consensus: The consensus data to store on the block.
         """
         pass
 
@@ -117,7 +107,16 @@ class BlockVerifierInterface(metaclass=ABCMeta):
         Args:
             block (Block): The block to validate.
         Returns:
-            Boolean: True if the Block is valid, False if the block is invalid.
+            None
+        """
+        pass
+
+    def compute_block_weight(self, block):
+        """
+        Args:
+            block (Block): The block to compute weight of.
+        Returns:
+            An opaque weight object.
         """
         pass
 
@@ -148,10 +147,9 @@ class ForkResolverInterface(metaclass=ABCMeta):
          only valid blocks.
 
         Args:
-            cur_fork_head (BlockWrapper): The current head of the block
-            chain.
-            new_fork_head (BlockWrapper): The head of the fork that is being
-            evaluated.
+            cur_fork_head (Block): The current head of the block chain.
+            new_fork_head (Block): The head of the fork that is being
+                evaluated.
         Returns:
             bool: True if the new chain should replace the current chain.
             False if the new chain should be discarded.

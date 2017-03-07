@@ -1,0 +1,3 @@
+[console_scripts]
+mktclient = mktmain.client_cli:main
+

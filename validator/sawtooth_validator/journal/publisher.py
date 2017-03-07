@@ -22,13 +22,9 @@ from sawtooth_validator.execution.scheduler_exceptions import SchedulerError
 from sawtooth_validator.journal.block_builder import BlockBuilder
 from sawtooth_validator.journal.block_wrapper import BlockWrapper
 from sawtooth_validator.journal.block_wrapper import NULL_BLOCK_IDENTIFIER
-from sawtooth_validator.journal.consensus.batch_publisher import \
-    BatchPublisher
 from sawtooth_validator.journal.consensus.consensus_factory import \
     ConsensusFactory
-
 from sawtooth_validator.journal.transaction_cache import TransactionCache
-
 
 from sawtooth_validator.protobuf.block_pb2 import BlockHeader
 from sawtooth_validator.protobuf.transaction_pb2 import TransactionHeader
@@ -49,7 +45,6 @@ class BlockPublisher(object):
                  block_cache,
                  state_view_factory,
                  block_sender,
-                 batch_sender,
                  squash_handler,
                  chain_head,
                  identity_signing_key):
@@ -57,16 +52,17 @@ class BlockPublisher(object):
         Initialize the BlockPublisher object
 
         Args:
+            consensus_module (module): The consensus module for block
+                processing.
             transaction_executor (:obj:`TransactionExecutor`): A
                 TransactionExecutor instance.
             block_cache (:obj:`BlockCache`): A BlockCache instance.
             state_view_factory (:obj:`StateViewFactory`): StateViewFactory for
                 read-only state views.
             block_sender (:obj:`BlockSender`): The BlockSender instance.
-            batch_sender (:obj:`BatchSender`): The BatchSender instance.
             squash_handler (function): Squash handler function for merging
                 contexts.
-            chain_head (:obj:`BlockWrapper`): The initial chain head.
+            chain_head (:obj:`BlockWrapper`): The inital chain head.
             identity_signing_key (str): Private key for signing blocks
         """
         self._lock = RLock()
@@ -76,16 +72,11 @@ class BlockPublisher(object):
         self._state_view_factory = state_view_factory
         self._transaction_executor = transaction_executor
         self._block_sender = block_sender
-        self._batch_publisher = BatchPublisher(identity_signing_key,
-                                               batch_sender)
         self._pending_batches = []  # batches we are waiting for validation,
         # arranged in the order of batches received.
-        self._committed_txn_cache = TransactionCache(self._block_cache.
-                                                     block_store)
-        # Look-up cache for transactions that are committed in the current
-        # chain. Cache is used here so that we can support opportunistically
-        # building on top of a block we published. As well as hold the state
-        # of the transactions already added to the candidate block.
+        self._committed_txn = None  # Look-up cache for transactions that are
+        # committed in the current chain. Cache is used here so that we can
+        # support opportunistically building on top of a block we published.
 
         self._scheduler = None
         self._chain_head = chain_head  # block (BlockWrapper)
@@ -96,7 +87,7 @@ class BlockPublisher(object):
 
     def _get_previous_block_root_state_hash(self, blkw):
         """ Get the state root hash for the previous block. This
-        function handles the origin block correctly.
+        function handles the origing block correctly.
         :param blkw: the reference block block.
         :return: The state root hash of the previous block.
         """
@@ -118,37 +109,35 @@ class BlockPublisher(object):
             create_view(prev_state)
         consensus_module = ConsensusFactory.get_configured_consensus_module(
             state_view)
-
         self._consensus = consensus_module.\
             BlockPublisher(block_cache=self._block_cache,
-                           state_view=state_view,
-                           batch_publisher=self._batch_publisher)
+                           state_view=state_view)
 
         block_header = BlockHeader(
             block_num=chain_head.block_num + 1,
             previous_block_id=chain_head.header_signature)
         block_builder = BlockBuilder(block_header)
-        if not self._consensus.initialize_block(block_builder.block_header):
-            LOGGER.debug("Consensus not ready to build candidate block.")
+        self._consensus.initialize_block(block_builder)
 
         # create a new scheduler
+        # TBD move factory in to executor for easier mocking --
+        # Yes I want to make fun of it.
         self._scheduler = self._transaction_executor.create_scheduler(
             self._squash_handler, chain_head.state_root_hash)
 
+        self._transaction_executor.execute(self._scheduler)
+        for batch in self._pending_batches:
+            self._validate_batch(batch)
+
         # build the TransactionCache
-        self._committed_txn_cache = TransactionCache(self._block_cache.
-                                                     block_store)
+        self._committed_txn = TransactionCache(self._block_cache.block_store)
         if chain_head.header_signature not in self._block_cache.block_store:
             # if we opportunistically building a block
             # we need to check make sure we track that blocks transactions
             # as recorded.
             for batch in chain_head.block.batches:
                 for txn in batch.transactions:
-                    self._committed_txn_cache.add_txn(txn.header_signature)
-
-        self._transaction_executor.execute(self._scheduler)
-        for batch in self._pending_batches:
-            self._validate_batch(batch)
+                    self._committed_txn.add_txn(txn.header_signature)
 
         return block_builder
 
@@ -166,26 +155,25 @@ class BlockPublisher(object):
         block.set_signature(signature)
         return block
 
-    def _check_batch_dependencies(self, batch, committed_txn_cache):
+    def _check_batch_dependencies(self, batch, committed_txn):
         """Check the dependencies for all transactions in this are present.
         If all are present the committed_txn is updated with all txn in this
         batch and True is returned. If they are not return failure and the
         committed_txn is not updated.
         :param batch: the batch to validate
-        :param committed_txn(TransactionCache): Current set of committed
+        :param committed_txn(TransactionCache): Current set of commited
         transaction, updated during processing.
         :return: Boolean, True if dependencies checkout, False otherwise.
         """
         for txn in batch.transactions:
-            if not self._check_transaction_dependencies(txn,
-                                                        committed_txn_cache):
+            if not self._check_transaction_dependencies(txn, committed_txn):
                 # if any transaction in this batch fails the whole batch
                 # fails.
-                committed_txn_cache.remove_batch(batch)
+                committed_txn.remove_batch(batch)
                 return False
             # update so any subsequent txn in the same batch can be dependent
             # on this transaction.
-            committed_txn_cache.add_txn(txn.header_signature)
+            committed_txn.add_txn(txn.header_signature)
         return True
 
     def _check_transaction_dependencies(self, txn, committed_txn):
@@ -200,7 +188,8 @@ class BlockPublisher(object):
             if dep not in committed_txn:
                 LOGGER.debug("Transaction rejected due " +
                              "missing dependency, transaction " +
-                             "%s depends on %s", txn.header_signature, dep)
+                             "{} depends on {}",
+                             txn.header_signature, dep)
                 return False
         return True
 
@@ -222,7 +211,7 @@ class BlockPublisher(object):
         :return: None
         """
         with self._lock:
-            # first we check if the transaction dependencies are satisfied
+            # first we check if the transaction dependencies are satisified
             # The completer should have taken care of making sure all
             # Batches containing dependent transactions were sent to the
             # BlockPublisher prior to this Batch. So if there is a missing
@@ -233,8 +222,7 @@ class BlockPublisher(object):
                 LOGGER.debug("Dropping previously committed batch: %s",
                              batch.header_signature)
                 return
-            elif self._check_batch_dependencies(batch, self.
-                                                _committed_txn_cache):
+            elif self._check_batch_dependencies(batch, self._committed_txn):
                 self._pending_batches.append(batch)
                 # if we are building a block then send schedule it for
                 # execution.
@@ -266,14 +254,12 @@ class BlockPublisher(object):
         # since batches can only be committed to a chain once.
         for batch in uncommitted_batches:
             if batch.header_signature not in committed_set:
-                if self._check_batch_dependencies(batch, self.
-                                                  committed_txn_cache):
+                if self._check_batch_dependencies(batch, self._committed_txn):
                     self._pending_batches.append(batch)
 
         for batch in pending_batches:
             if batch.header_signature not in committed_set:
-                if self._check_batch_dependencies(batch, self.
-                                                  _committed_txn_cache):
+                if self._check_batch_dependencies(batch, self._committed_txn):
                     self._pending_batches.append(batch)
 
     def on_chain_updated(self, chain_head,
@@ -304,22 +290,15 @@ class BlockPublisher(object):
                     # This can happen after we publish a block and
                     # opportunistically create a new block.
                     return
-                elif chain_head is None:
-                    # we don't have a chain head, we cannot build blocks
-                    self._candidate_block = None
-                    self._consensus = None
-                    self._committed_txn_cache =\
-                        TransactionCache(self._block_cache.block_store)
-                    for batch in self._pending_batches:
-                        self._committed_txn_cache.add_batch(batch)
                 else:
                     self._rebuild_pending_batches(committed_batches,
                                                   uncommitted_batches)
+
                     self._candidate_block = self._build_block(chain_head)
         # pylint: disable=broad-except
         except Exception as exc:
-            LOGGER.critical("on_chain_updated exception.")
             LOGGER.exception(exc)
+            LOGGER.critical("BlockPublisher thread exited.")
 
     def _finalize_block(self, block):
         if self._scheduler:
@@ -328,12 +307,9 @@ class BlockPublisher(object):
 
         # Read valid batches from self._scheduler
         pending_batches = self._pending_batches
-        # this is a transaction cache to track the transactions committed
-        # upto this batch.
-        committed_txn_cache = TransactionCache(self._block_cache.block_store)
+        committed_txn = TransactionCache(self._block_cache.block_store)
         self._pending_batches = []
-        self._committed_txn_cache = TransactionCache(self._block_cache.
-                                                     block_store)
+        self._committed_txn = TransactionCache(self._block_cache.block_store)
 
         state_hash = None
         for batch in pending_batches:
@@ -343,69 +319,61 @@ class BlockPublisher(object):
             # received the batch and it should be added to
             # the pending_batches
             if result is None:
+                committed_txn.uncommit_batch(batch)
                 self._pending_batches.append(batch)
-                self._committed_txn_cache.add_batch(batch)
             elif result.is_valid:
                 # check if a dependent batch failed. This could be belt and
                 # suspenders action here but it is logically possible that
                 # a transaction has a dependency that fails it could
                 # still succeed validation. In that case we do not want
                 # to add it to the batch.
-                if not self._check_batch_dependencies(batch,
-                                                      committed_txn_cache):
+                if not self._check_batch_dependencies(batch, committed_txn):
                     LOGGER.debug("Batch %s invalid, due to missing txn "
                                  "dependency.", batch.header_signature)
-                    LOGGER.debug("Abandoning block %s:" +
-                                 "root state hash has invalid txn applied",
-                                 block)
-                    pending_batches.remove(batch)
-                    self._pending_batches = pending_batches
-                    return False
                 else:
                     block.add_batch(batch)
                 state_hash = result.state_hash
             else:
-                committed_txn_cache.uncommit_batch(batch)
+                committed_txn.uncommit_batch(batch)
                 LOGGER.debug("Batch %s invalid, not added to block.",
                              batch.header_signature)
 
         if state_hash is None:
             LOGGER.debug("Abandoning block %s no batches added", block)
-            return False
+            return
 
-        if not self._consensus.finalize_block(block.block_header):
-            LOGGER.debug("Abandoning block %s, consensus failed to finalize "
-                         "it", block)
-            return False
-
+        self._consensus.finalize_block(block)
         self._consensus = None
 
         block.set_state_hash(state_hash)
         self._sign_block(block)
 
-        return True
+        return block
 
     def on_check_publish_block(self, force=False):
         """Ask the consensus module if it is time to claim the candidate block
         if it is then, claim it and tell the world about it.
         :return:
-            None
         """
         try:
             with self._lock:
-                if self._chain_head is not None and\
-                        self._candidate_block is None and\
+                if self._candidate_block is None and\
                         len(self._pending_batches) != 0:
                     self._candidate_block = self._build_block(self._chain_head)
+
                 if self._candidate_block and \
                         (force or len(self._pending_batches) != 0) and \
                         self._consensus.check_publish_block(self.
-                                                            _candidate_block.
-                                                            block_header):
+                                                            _candidate_block):
                     candidate = self._candidate_block
                     self._candidate_block = None
 
-                    if not self._finalize_block(candidate):
+                    self._finalize_block(candidate)
+                    # if no batches are in the block, do not send it out
+                    if len(candidate.batches) == 0:
+                        LOGGER.info("No Valid batches added to block, " +
+                                    " dropping %s",
+                                    candidate.identifier[:8])
                         return
 
                     block = BlockWrapper(candidate.build_block())
@@ -420,5 +388,5 @@ class BlockPublisher(object):
                     self.on_chain_updated(block)
         # pylint: disable=broad-except
         except Exception as exc:
-            LOGGER.critical("on_check_publish_block exception.")
             LOGGER.exception(exc)
+            LOGGER.critical("BlockPublisher thread exited.")

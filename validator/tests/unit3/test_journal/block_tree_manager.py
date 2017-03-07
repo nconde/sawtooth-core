@@ -38,7 +38,6 @@ from sawtooth_validator.protobuf.setting_pb2 import Setting
 from sawtooth_validator.protobuf.transaction_pb2 import Transaction
 from sawtooth_validator.protobuf.transaction_pb2 import TransactionHeader
 
-from test_journal.mock import MockBatchSender
 from test_journal.mock import MockBlockSender
 from test_journal.mock import MockStateViewFactory
 from test_journal.mock import MockTransactionExecutor
@@ -64,15 +63,29 @@ def _setting_entry(key, value):
 
 
 class BlockTreeManager(object):
-    def __str__(self):
-        return str(self.block_cache)
-
-    def __repr__(self):
-        return repr(self.block_cache)
+    def block_def(self,
+                  add_to_store=False,
+                  add_to_cache=False,
+                  batch_count=0,
+                  status=BlockStatus.Unknown,
+                  invalid_consensus=False,
+                  invalid_batch=False,
+                  invalid_signature=False,
+                  weight=None
+                  ):
+        return {
+            "add_to_cache": add_to_cache,
+            "add_to_store": add_to_store,
+            "batch_count": batch_count,
+            "status": status,
+            "invalid_consensus": invalid_consensus,
+            "invalid_batch": invalid_batch,
+            "invalid_signature": invalid_signature,
+            "weight": weight
+        }
 
     def __init__(self):
         self.block_sender = MockBlockSender()
-        self.batch_sender = MockBatchSender()
         self.block_store = BlockStore(DictDatabase())
         self.block_cache = BlockCache(self.block_store)
         self.state_db = {}
@@ -96,10 +109,32 @@ class BlockTreeManager(object):
             block_cache=self.block_cache,
             state_view_factory=self.state_view_factory,
             block_sender=self.block_sender,
-            batch_sender=self.block_sender,
             squash_handler=None,
             chain_head=self.genesis_block,
             identity_signing_key=self.identity_signing_key)
+
+    def _get_block_id(self, block):
+        if (block is None):
+            return None
+        elif isinstance(block, Block) or\
+                isinstance(block, BlockWrapper):
+            return block.header_signature
+        elif isinstance(block, basestring):
+            return block
+        else:
+            return str(block)
+
+    def _get_block(self, block):
+        if (block is None):
+            return None
+        elif isinstance(block, Block):
+            return BlockWrapper(block)
+        elif isinstance(block, BlockWrapper):
+            return block
+        elif isinstance(block, str):
+            return self.block_cache[block]
+        else:  # WTF try something crazy
+            return self.block_cache[str(block)]
 
     @property
     def chain_head(self):
@@ -116,7 +151,7 @@ class BlockTreeManager(object):
                        invalid_consensus=False,
                        invalid_batch=False,
                        invalid_signature=False,
-                       weight=0):
+                       weight=None):
 
         previous = self._get_block(previous_block)
         if previous is None:
@@ -128,122 +163,30 @@ class BlockTreeManager(object):
             self.block_publisher.on_batch_received(self._generate_batch(''))
             self.block_publisher.on_check_publish_block(True)
 
-        block_from_sender = self.block_sender.new_block
+        block = self.block_sender.new_block
         self.block_sender.new_block = None
 
-        block_wrapper = BlockWrapper(block_from_sender)
+        block = BlockWrapper(block)
 
         if invalid_signature:
-            block_wrapper.block.header_signature = "BAD"
+            block.block.header_signature = "BAD"
 
-        if invalid_consensus:
-            block_wrapper.header.consensus = b'BAD'
-
-        if invalid_batch:
-            block_wrapper.block.batches.extend(
-                [self._generate_batch('BAD')])
-
-        block_wrapper.weight = weight
-        block_wrapper.status = status
+        block.weight = weight
+        block.status = status
 
         if add_to_cache:
-            self.block_cache[block_wrapper.identifier] = block_wrapper
+            self.block_cache[block.identifier] = block
 
         if add_to_store:
-            self.block_store[block_wrapper.identifier] = block_wrapper
+            if block.weight is None:
+                state_view = self.state_view_factory.create_view(None)
+                tmv = mock_consensus.\
+                    BlockVerifier(block_cache=self.block_cache,
+                                  state_view=state_view)
+                block.weight = tmv.compute_block_weight(block)
+            self.block_store[block.identifier] = block
 
-        return block_wrapper
-
-    def generate_chain(self, root_block, blocks, params=None):
-        """
-        Generate a new chain based on the root block and place it in the
-        block cache.
-        """
-        if params is None:
-            params = {}
-
-        if root_block is None:
-            previous = self._generate_genesis_block()
-            self.block_store[previous.identifier] = previous
-        else:
-            previous = self._get_block(root_block)
-
-        try:
-            block_defs = [self._block_def(**params) for _ in range(blocks)]
-        except TypeError:
-            block_defs = blocks
-
-        out = []
-        for block_def in block_defs:
-            new_block = self.generate_block(
-                previous_block=previous, **block_def)
-            out.append(new_block)
-            previous = new_block
-        return out
-
-    def _generate_block(self, payload, previous_block_id, block_num):
-        header = BlockHeader(
-            previous_block_id=previous_block_id,
-            signer_pubkey=self.public_key,
-            block_num=block_num)
-
-        block_builder = BlockBuilder(header)
-        block_builder.add_batches([self._generate_batch(payload)])
-
-        header_bytes = block_builder.block_header.SerializeToString()
-        signature = signing.sign(header_bytes, self.identity_signing_key)
-        block_builder.set_signature(signature)
-
-        return BlockWrapper(block_builder.build_block())
-
-    def _generate_genesis_block(self):
-        return self._generate_block(
-            payload='Genesis',
-            previous_block_id=NULL_BLOCK_IDENTIFIER,
-            block_num=0)
-
-    def _block_def(self,
-                   add_to_store=False,
-                   add_to_cache=False,
-                   batch_count=0,
-                   status=BlockStatus.Unknown,
-                   invalid_consensus=False,
-                   invalid_batch=False,
-                   invalid_signature=False,
-                   weight=0):
-        return {
-            "add_to_cache": add_to_cache,
-            "add_to_store": add_to_store,
-            "batch_count": batch_count,
-            "status": status,
-            "invalid_consensus": invalid_consensus,
-            "invalid_batch": invalid_batch,
-            "invalid_signature": invalid_signature,
-            "weight": weight
-        }
-
-    def _get_block_id(self, block):
-        if block is None:
-            return None
-        elif isinstance(block, Block) or\
-                isinstance(block, BlockWrapper):
-            return block.header_signature
-        elif isinstance(block, basestring):
-            return block
-        else:
-            return str(block)
-
-    def _get_block(self, block):
-        if block is None:
-            return None
-        elif isinstance(block, Block):
-            return BlockWrapper(block)
-        elif isinstance(block, BlockWrapper):
-            return block
-        elif isinstance(block, str):
-            return self.block_cache[block]
-        else:  # WTF try something crazy
-            return self.block_cache[str(block)]
+        return block
 
     def _generate_batch(self, payload):
         payload_encoded = payload.encode('utf-8')
@@ -276,3 +219,54 @@ class BlockTreeManager(object):
         batch.header_signature = signing.sign(header_bytes, self.signing_key)
         batch.transactions.extend([txn])
         return batch
+
+    def _generate_genesis_block(self):
+        genesis_header = BlockHeader(
+            previous_block_id=NULL_BLOCK_IDENTIFIER,
+            signer_pubkey=self.public_key,
+            block_num=0)
+
+        block = BlockBuilder(genesis_header)
+        block.add_batches([self._generate_batch("Genesis")])
+        header_bytes = block.block_header.SerializeToString()
+        signature = signing.sign(header_bytes, self.identity_signing_key)
+        block.set_signature(signature)
+        return BlockWrapper(block.build_block())
+
+    def generate_chain(self, root_block, blocks, params=None):
+        """
+        Generate a new chain based on the root block and place it in the
+        block cache.
+        """
+        if params is None:
+            params = {}
+
+        out = []
+        if not isinstance(blocks, list):
+            blocks = self.generate_chain_definition(int(blocks), params)
+
+        if root_block is None:
+            previous = self._generate_genesis_block()
+            self.block_store[previous.identifier] = previous
+        else:
+            previous = self._get_block(root_block)
+        for block in blocks:
+            new_block = self.generate_block(previous_block=previous, **block)
+            out.append(new_block)
+            previous = new_block
+        return out
+
+    def generate_chain_definition(self, count, params=None):
+        if params is None:
+            params = {}
+
+        out = []
+        for _ in range(0, count):
+            out.append(self.block_def(**params))
+        return out
+
+    def __str__(self):
+        return str(self.block_cache)
+
+    def __repr__(self):
+        return repr(self.block_cache)

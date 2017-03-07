@@ -29,7 +29,7 @@ def add_block_parser(subparsers, parent_parser):
 
     grand_parsers = parser.add_subparsers(title='grandchildcommands',
                                           dest='subcommand')
-    grand_parsers.required = True
+
     epilog = '''
     details:
         Lists committed blocks from the newest to the oldest, including
@@ -46,7 +46,6 @@ def add_block_parser(subparsers, parent_parser):
         '--format',
         action='store',
         default='default',
-        choices=['csv', 'json', 'yaml', 'default'],
         help='the format of the output, options: csv, json or yaml')
 
     epilog = '''
@@ -62,7 +61,7 @@ def add_block_parser(subparsers, parent_parser):
     show_parser.add_argument(
         '-k', '--key',
         type=str,
-        help='specify to show a single property from the block or header')
+        help='specficy to show a single property from the block or header')
     show_parser.add_argument(
         '--url',
         type=str,
@@ -71,12 +70,10 @@ def add_block_parser(subparsers, parent_parser):
         '--format',
         action='store',
         default='yaml',
-        choices=['yaml', 'json'],
         help='the format of the output, options: yaml (default), or json')
 
 
 def do_block(args):
-
     rest_client = RestClient(args.url)
 
     def print_json(data):
@@ -137,7 +134,7 @@ def do_block(args):
                 print_yaml(block_data)
 
         else:
-            raise AssertionError('unknown format: {}'.format(args.format))
+            raise CliException('unknown format: {}'.format(args.format))
 
     if args.subcommand == 'show':
         block = rest_client.get_block(args.block_id)
@@ -156,4 +153,4 @@ def do_block(args):
             elif args.format == 'json':
                 print_json(block)
             else:
-                raise AssertionError('unknown format: {}'.format(args.format))
+                raise CliException('unknown format: {}'.format(args.format))

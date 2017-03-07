@@ -57,12 +57,10 @@ class ProcessorIteratorCollection(object):
         """Get the next processor of a particular type
 
         :param processor_type ProcessorType:
-        :return: Processor or None if processor_type not registered
+        :return: Processor
         """
         with self._condition:
-            if processor_type in self:
-                return self[processor_type].next_processor()
-            return None
+            return self[processor_type].next_processor()
 
     def __setitem__(self, key, value):
         """Set a ProcessorIterator to a ProcessorType,
@@ -100,7 +98,7 @@ class ProcessorIteratorCollection(object):
             for processor_type in processor_types:
                 if processor_type not in self._processors:
                     LOGGER.warning("processor type %s not a known processor "
-                                   "type but is associated with identity %s",
+                                   "type but it associated with identity %s",
                                    processor_type,
                                    processor_identity)
                     continue

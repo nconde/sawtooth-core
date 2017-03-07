@@ -60,8 +60,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         self.assertEqual(True, genesis_ctrl.requires_genesis())
@@ -79,8 +78,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         self.assertEqual(False, genesis_ctrl.requires_genesis())
@@ -98,8 +96,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         self.assertEqual(False, genesis_ctrl.requires_genesis())
@@ -122,8 +119,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         self.assertEqual(False, genesis_ctrl.requires_genesis())
@@ -140,7 +136,10 @@ class TestGenesisController(unittest.TestCase):
 
         block_store = self.make_block_store({
             'chain_head_id': 'some_other_id',
-            'some_other_id': b''
+            'some_other_id': {
+                'weight': 0,
+                'block': b''
+            }
         })
 
         genesis_ctrl = GenesisController(
@@ -151,8 +150,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         with self.assertRaises(InvalidGenesisStateError):
@@ -179,8 +177,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(DictDatabase()),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         with self.assertRaises(InvalidGenesisStateError):
@@ -220,8 +217,7 @@ class TestGenesisController(unittest.TestCase):
             StateViewFactory(state_database),
             self._identity_key,
             data_dir=self._temp_dir,
-            chain_id_manager=ChainIdManager(self._temp_dir),
-            batch_sender=Mock('batch_sender')
+            chain_id_manager=ChainIdManager(self._temp_dir)
         )
 
         on_done_fn = Mock(return_value='')

@@ -1,0 +1,4 @@
+sawtooth-core
+sawtooth-signing
+colorlog
+PyYAML

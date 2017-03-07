@@ -18,13 +18,8 @@ import os
 from pathlib import Path
 
 from sawtooth_signing import secp256k1_signer as signing
-
-from sawtooth_validator.exceptions import InvalidGenesisStateError
-from sawtooth_validator.exceptions import InvalidGenesisConsensusError
-from sawtooth_validator.exceptions import UnknownConsensusModuleError
-
-from sawtooth_validator.execution.scheduler_serial import SerialScheduler
-
+from sawtooth_validator.protobuf import genesis_pb2
+from sawtooth_validator.protobuf import block_pb2
 from sawtooth_validator.journal.block_builder import BlockBuilder
 from sawtooth_validator.journal.block_cache import BlockCache
 from sawtooth_validator.journal.block_wrapper import BlockWrapper
@@ -32,8 +27,9 @@ from sawtooth_validator.journal.block_wrapper import BlockStatus
 from sawtooth_validator.journal.block_wrapper import NULL_BLOCK_IDENTIFIER
 from sawtooth_validator.journal.consensus.consensus_factory import \
     ConsensusFactory
-from sawtooth_validator.protobuf import genesis_pb2
-from sawtooth_validator.protobuf import block_pb2
+from sawtooth_validator.execution.scheduler_serial import SerialScheduler
+from sawtooth_validator.exceptions import InvalidGenesisStateError
+from sawtooth_validator.exceptions import UnknownConsensusModuleError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -48,8 +44,7 @@ class GenesisController(object):
                  state_view_factory,
                  identity_key,
                  data_dir,
-                 chain_id_manager,
-                 batch_sender):
+                 chain_id_manager):
         """Creates a GenesisController.
 
         Args:
@@ -63,9 +58,6 @@ class GenesisController(object):
                 factory for creating state views during processing.
             identity_key (str): A private key used for signing blocks, in hex.
             data_dir (str): The directory for data files.
-            chain_id_manager (ChainIdManager): utility class to manage the
-            chain id file.
-            batch_sender: interface to broadcast batches to the network.
         """
         self._context_manager = context_manager
         self._transaction_executor = transaction_executor
@@ -75,7 +67,6 @@ class GenesisController(object):
         self._identity_priv_key = identity_key
         self._data_dir = data_dir
         self._chain_id_manager = chain_id_manager
-        self._batch_sender = batch_sender
 
     def requires_genesis(self):
         """
@@ -152,7 +143,8 @@ class GenesisController(object):
             for batch in genesis_data.batches:
                 scheduler.add_batch(batch)
 
-            self._transaction_executor.execute(scheduler)
+            self._transaction_executor.execute(scheduler,
+                                               require_txn_processors=True)
 
             scheduler.finalize()
             scheduler.complete(block=True)
@@ -175,19 +167,12 @@ class GenesisController(object):
         block_builder.set_state_hash(state_hash)
 
         block_publisher = self._get_block_publisher(state_hash)
-        if not block_publisher.initialize_block(block_builder.block_header):
-            LOGGER.error('Consensus refused to initialize consensus block.')
-            raise InvalidGenesisConsensusError(
-                'Consensus refused to initialize genesis block.')
-
-        if not block_publisher.finalize_block(block_builder.block_header):
-            LOGGER.error('Consensus refused to finalize genesis block.')
-            raise InvalidGenesisConsensusError(
-                'Consensus refused to finalize genesis block.')
+        block_publisher.initialize_block(block_builder)
 
         self._sign_block(block_builder)
 
         block = block_builder.build_block()
+        block_publisher.finalize_block(block)
 
         blkw = BlockWrapper(block=block, status=BlockStatus.Valid)
 
@@ -217,25 +202,11 @@ class GenesisController(object):
         """
         state_view = self._state_view_factory.create_view(state_hash)
         try:
-            class BatchPublisher(object):
-                def send(self, transactions):
-                    # Consensus implementations are expected to have handling
-                    # in place for genesis operation. This should includes
-                    # adding any authorization and registrations required
-                    # for the genesis node to the Genesis Batch list and
-                    # detecting validation of the Genesis Block and handle it
-                    # correctly. Batch publication is not allowed during
-                    # genesis operation since there is no network to validate
-                    # the batch yet.
-                    raise InvalidGenesisConsensusError(
-                        'Consensus cannot send transactions during genesis.')
-
             consensus = ConsensusFactory.get_configured_consensus_module(
                 state_view)
             return consensus.BlockPublisher(
                 BlockCache(self._block_store),
-                state_view=state_view,
-                batch_publisher=BatchPublisher())
+                state_view=state_view)
         except UnknownConsensusModuleError as e:
             raise InvalidGenesisStateError(e)
 

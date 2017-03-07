@@ -104,19 +104,8 @@ class BlockValidator(object):
         :param blkw: the block to verify
         :return: Boolean - True on success.
         """
-        try:
-            return signing.verify(
-                blkw.block.header,
-                blkw.block.header_signature,
-                blkw.header.signer_pubkey)
-
-        # To be on the safe side, assume any exception thrown
-        # during signature validation means the signature
-        # is invalid.
-
-        # pylint: disable=broad-except
-        except Exception:
-            return False
+        return signing.verify(blkw.block.header, blkw.block.header_signature,
+                              blkw.header.signer_pubkey)
 
     def _verify_batches_dependencies(self, batch, committed_txn):
         """Verify that all transactions dependencies in this batch have been
@@ -205,6 +194,8 @@ class BlockValidator(object):
                 if valid:
                     valid = consensus.verify_block(blkw)
 
+                # Update the block store
+                blkw.weight = consensus.compute_block_weight(blkw)
                 blkw.status = BlockStatus.Valid if \
                     valid else BlockStatus.Invalid
                 return valid
@@ -258,7 +249,8 @@ class BlockValidator(object):
         return (new_blkw, cur_blkw)
 
     def _find_common_ancestor(self, new_blkw, cur_blkw, new_chain, cur_chain):
-        """ Finds a common ancestor of the two chains.
+        """
+        Finds a common ancestor of the two chains.
         """
         while cur_blkw.identifier != \
                 new_blkw.identifier:
@@ -283,8 +275,9 @@ class BlockValidator(object):
             cur_blkw = \
                 self._block_cache[cur_blkw.previous_block_id]
 
-    def _test_commit_new_chain(self):
-        """ Compare the two chains and determine which should be the head.
+    def _compare_forks(self, new_chain, cur_chain):
+        """
+        Compare the two chains and determine which should be the head.
         """
         fork_resolver = self._consensus_module.\
             ForkResolver(block_cache=self._block_cache)
@@ -354,9 +347,8 @@ class BlockValidator(object):
                 self._done_cb(False, self._result)
                 return
 
-            # 4) Evaluate the 2 chains to see if the new chain should be
-            # committed
-            commit_new_chain = self._test_commit_new_chain()
+            # 4) Evaluate the 2 chains to see which is the one true chain.
+            commit_new_chain = self._compare_forks(new_chain, cur_chain)
 
             # 5) Consensus to compute batch sets (only if we are switching).
             if commit_new_chain:
@@ -551,7 +543,7 @@ class ChainController(object):
             chain_id = self._chain_id_manager.get_block_chain_id()
             if chain_id != block.identifier:
                 LOGGER.warning("Block id does not match block chain id. "
-                               "Cannot set initial chain head.: %s",
+                               "Cannot set intitial chain head.: %s",
                                block.identifier)
             elif chain_id is None:
                 self._chain_id_manager.save_block_chain_id(block.identifier)
@@ -574,7 +566,8 @@ class ChainController(object):
 
             valid = validator.validate_block(block, committed_txn)
             if valid:
-                self._block_store.update_chain([block])
+                self._block_store.set_chain_head(block.identifier)
+                self._block_store[block.identifier] = block
                 self._chain_head = block
                 self._notify_on_chain_updated(self._chain_head)
             else:

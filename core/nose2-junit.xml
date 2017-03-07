@@ -1,0 +1,7 @@
+<testsuite errors="1" failures="0" name="nose2-junit" skipped="0" tests="1" time="0.002">
+  <testcase classname="nose2.loader.LoadTestsFailure.sawtooth_suites.ts_nightly_poet1" name="Poet1NightlyTestSuite" time="0.000867">
+    <error message="test failure">ImportError: No module named sawtooth_suites
+</error>
+    <system-err />
+  </testcase>
+</testsuite>

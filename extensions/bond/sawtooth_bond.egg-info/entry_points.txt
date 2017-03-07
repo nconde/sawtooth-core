@@ -1,0 +1,4 @@
+[console_scripts]
+btp = sawtooth_bond.btp_cli:main_wrapper
+libor = libor.libor_cli:main_wrapper
+

@@ -22,12 +22,6 @@ class WrongBodyType(web.HTTPBadRequest):
         super().__init__(reason=message)
 
 
-class MissingStatusId(web.HTTPBadRequest):
-    def __init__(self):
-        message = 'At least one batch id must be specified to check status'
-        super().__init__(reason=message)
-
-
 class ValidatorUnavailable(web.HTTPServiceUnavailable):
     def __init__(self):
         message = 'Could not reach validator, validator timed out'

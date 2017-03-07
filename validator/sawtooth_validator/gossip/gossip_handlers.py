@@ -30,15 +30,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PeerRegisterHandler(Handler):
-    def __init__(self, gossip):
-        self._gossip = gossip
 
     def handle(self, identity, message_content):
         request = PeerRegisterRequest()
         request.ParseFromString(message_content)
         LOGGER.debug("got peer register message "
                      "from %s. sending ack", identity)
-        self._gossip.register_identity(identity)
         ack = NetworkAcknowledgement()
         ack.status = ack.OK
 
@@ -49,15 +46,13 @@ class PeerRegisterHandler(Handler):
 
 
 class PeerUnregisterHandler(Handler):
-    def __init__(self, gossip):
-        self._gossip = gossip
 
     def handle(self, identity, message_content):
         request = PeerUnregisterRequest()
         request.ParseFromString(message_content)
         LOGGER.debug("got peer unregister message "
                      "from %s. sending ack", identity)
-        self._gossip.unregister_identity(identity)
+
         ack = NetworkAcknowledgement()
         ack.status = ack.OK
 

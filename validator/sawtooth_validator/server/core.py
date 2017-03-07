@@ -28,8 +28,6 @@ from sawtooth_validator.journal.genesis import GenesisController
 from sawtooth_validator.journal.journal import Journal
 from sawtooth_validator.protobuf import validator_pb2
 from sawtooth_validator.execution import tp_state_handlers
-from sawtooth_validator.journal.batch_sender import BroadcastBatchSender
-from sawtooth_validator.journal.block_sender import BroadcastBlockSender
 from sawtooth_validator.journal.block_store import BlockStore
 from sawtooth_validator.journal.completer import CompleterGossipHandler
 from sawtooth_validator.journal.completer import \
@@ -41,11 +39,11 @@ from sawtooth_validator.journal.responder import BatchByBatchIdResponderHandler
 from sawtooth_validator.journal.responder import \
     BatchByTransactionIdResponderHandler
 from sawtooth_validator.networking.dispatch import Dispatcher
+from sawtooth_validator.journal.block_sender import BroadcastBlockSender
 from sawtooth_validator.journal.chain_id_manager import ChainIdManager
 from sawtooth_validator.execution.executor import TransactionExecutor
 from sawtooth_validator.execution import processor_handlers
 from sawtooth_validator.state import client_handlers
-from sawtooth_validator.state.config_view import ConfigViewFactory
 from sawtooth_validator.state.state_view import StateViewFactory
 from sawtooth_validator.gossip import signature_verifier
 from sawtooth_validator.networking.interconnect import Interconnect
@@ -55,7 +53,6 @@ from sawtooth_validator.gossip.gossip_handlers import GossipMessageHandler
 from sawtooth_validator.gossip.gossip_handlers import PeerRegisterHandler
 from sawtooth_validator.gossip.gossip_handlers import PeerUnregisterHandler
 from sawtooth_validator.gossip.gossip_handlers import PingHandler
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,10 +98,7 @@ class Validator(object):
         self._service = Interconnect(component_endpoint,
                                      self._dispatcher,
                                      secured=False)
-        executor = TransactionExecutor(service=self._service,
-                                       context_manager=context_manager,
-                                       config_view_factory=ConfigViewFactory(
-                                           StateViewFactory(merkle_db)))
+        executor = TransactionExecutor(self._service, context_manager)
 
         identity = hashlib.sha512(
             time.time().hex().encode()).hexdigest()[:23]
@@ -139,14 +133,12 @@ class Validator(object):
         completer = Completer(block_store, self._gossip)
 
         block_sender = BroadcastBlockSender(completer, self._gossip)
-        batch_sender = BroadcastBatchSender(completer, self._gossip)
         chain_id_manager = ChainIdManager(data_dir)
         # Create and configure journal
         self._journal = Journal(
             block_store=block_store,
             state_view_factory=StateViewFactory(merkle_db),
             block_sender=block_sender,
-            batch_sender=batch_sender,
             transaction_executor=executor,
             squash_handler=context_manager.get_squash_handler(),
             identity_signing_key=identity_signing_key,
@@ -161,8 +153,7 @@ class Validator(object):
             state_view_factory=state_view_factory,
             identity_key=identity_signing_key,
             data_dir=data_dir,
-            chain_id_manager=chain_id_manager,
-            batch_sender=batch_sender
+            chain_id_manager=chain_id_manager
         )
 
         responder = Responder(completer)
@@ -198,12 +189,12 @@ class Validator(object):
 
         self._network_dispatcher.add_handler(
             validator_pb2.Message.GOSSIP_REGISTER,
-            PeerRegisterHandler(gossip=self._gossip),
+            PeerRegisterHandler(),
             network_thread_pool)
 
         self._network_dispatcher.add_handler(
             validator_pb2.Message.GOSSIP_UNREGISTER,
-            PeerUnregisterHandler(gossip=self._gossip),
+            PeerUnregisterHandler(),
             network_thread_pool)
 
         self._network_dispatcher.add_handler(
@@ -252,13 +243,6 @@ class Validator(object):
             validator_pb2.Message.CLIENT_BATCH_SUBMIT_REQUEST,
             CompleterBatchListBroadcastHandler(
                 completer, self._gossip),
-            thread_pool)
-
-        self._dispatcher.add_handler(
-            validator_pb2.Message.CLIENT_BATCH_STATUS_REQUEST,
-            client_handlers.BatchStatusRequest(
-                self._journal.get_block_store(),
-                completer.batch_cache),
             thread_pool)
 
         self._dispatcher.add_handler(

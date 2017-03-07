@@ -13,12 +13,11 @@
 # limitations under the License.
 # ------------------------------------------------------------------------------
 from concurrent.futures import Executor
-from sawtooth_validator.execution.scheduler import Scheduler
-from sawtooth_validator.execution.scheduler import BatchExecutionResult
-from sawtooth_validator.journal.batch_sender import BatchSender
-from sawtooth_validator.journal.block_sender import BlockSender
 from sawtooth_validator.protobuf import batch_pb2
 from sawtooth_validator.protobuf import block_pb2
+from sawtooth_validator.execution.scheduler import Scheduler
+from sawtooth_validator.execution.scheduler import BatchExecutionResult
+from sawtooth_validator.journal.block_sender import BlockSender
 
 
 class SynchronousExecutor(Executor):
@@ -127,13 +126,6 @@ class MockBlockSender(BlockSender):
 
     def send(self, block):
          self.new_block = block
-
-class MockBatchSender(BatchSender):
-    def __init__(self):
-        self.new_batch = None
-
-    def send(self, batch):
-         self.new_batch = batch
 
 
 class MockStateViewFactory(object):
