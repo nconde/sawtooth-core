@@ -65,9 +65,99 @@ class BattleshipHandler(object):
         if action == "":
             raise InvalidTransaction("Action is required")
 
-        if action == 'CREATE':
-            state_store[self._name] = {'State': 'NEW', 'Ships': self._ships}
-        elif action == 'JOIN':
+        elif action == "join":
+            try:
+                space = int(space)
+            except:
+                raise InvalidTransaction(
+                    "Space could not be converted as an integer."
+                )
+
+            if space < 1 or space > 9:
+                raise InvalidTransaction("Invalid space {}".format(space))
+
+        elif action == "fire":
+            try:
+                space = int(space)
+            except:
+                raise InvalidTransaction(
+                    "Space could not be converted as an integer."
+                )
+
+            if space < 1 or space > 9:
+                raise InvalidTransaction("Invalid space {}".format(space))
+
+        if action not in ("fire", "join", "create"):
+            raise InvalidTransaction("Invalid Action : '{}'".format(action))
+
+
+        # 2. Retrieve the game data from state storage
+
+        # Use the namespace prefix + the has of the game name to create the
+        # storage address
+        game_address = self._namespace_prefix \
+                       + hashlib.sha512(name.encode("utf-8")).hexdigest()
+
+        # Get data from address
+        state_entries = state_store.get([game_address])
+
+        # state_store.get() returns a list. If no data has been stored yet
+        # at the given address, it will be empty.
+        if len(state_entries) != 0:
+            try:
+                board, state, player1, player2, stored_name = \
+                    state_entries[0].data.decode().split(",")
+            except:
+                raise InternalError("Failed to deserialize game data.")
+
+            # NOTE: Since the game data is stored in a Merkle tree, there is a
+            # small chance of collision. A more correct usage would be to store
+            # a dictionary of games so that multiple games could be store at
+            # the same location. See the python intkey handler for an example
+            # of this.
+            if stored_name != name:
+                raise InternalError("Hash collision")
+
+        else:
+            board = state = player1 = player2 = None
+
+
+        # 3. Validate the game data
+
+        if action == "create" and board is not None:
+            raise InvalidTransaction("Invalid Action: Game already exists.")
+            # state_store[self._name] = {'State': 'NEW', 'Ships': self._ships}
+        elif action == 'join':
+            if board is None:
+                raise InvalidTransaction(
+                    "Invalid Action: Join requires an existing game."
+                )
+            else:
+                if state in ("P1-WIN", "P2-WIN", "TIE"):
+                    raise InvalidTransaction(
+                        "Invalid Action: Game has ended."
+                    )
+                elif state not in ("P1-NEXT", "P2-NEXT"):
+                    raise InternalError(
+                        "Game has reached an invalid state: {}".format(state))
+
+        elif action == 'fire':
+            if board is None:
+                raise InvalidTransaction(
+                    "Invalid Action: Fire requires an existing game."
+                )
+            else:
+                if state in ("P1-WIN", "P2-WIN", "TIE"):
+                    raise InvalidTransaction(
+                        "Invalid Action: Game has ended."
+                    )
+                elif state not in ("P1-NEXT", "P2-NEXT"):
+                    raise InternalError(
+                        "Game has reached an invalid state: {}".format(state))
+
+        # 4. Apply the transaction
+        if action == "create":
+
             game = state_store[self._name].copy()
 
             # If this is the first JOIN, set HashedBoard1 and Player1 in the
