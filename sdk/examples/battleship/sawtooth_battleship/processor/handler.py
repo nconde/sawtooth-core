@@ -65,17 +65,6 @@ class BattleshipHandler(object):
         if action == "":
             raise InvalidTransaction("Action is required")
 
-        elif action == "join":
-            try:
-                space = int(space)
-            except:
-                raise InvalidTransaction(
-                    "Space could not be converted as an integer."
-                )
-
-            if space < 1 or space > 9:
-                raise InvalidTransaction("Invalid space {}".format(space))
-
         elif action == "fire":
             try:
                 space = int(space)
@@ -84,8 +73,8 @@ class BattleshipHandler(object):
                     "Space could not be converted as an integer."
                 )
 
-            if space < 1 or space > 9:
-                raise InvalidTransaction("Invalid space {}".format(space))
+            # if space < 1 or space > 9:
+            #     raise InvalidTransaction("Invalid space {}".format(space))
 
         if action not in ("fire", "join", "create"):
             raise InvalidTransaction("Invalid Action : '{}'".format(action))
@@ -157,119 +146,53 @@ class BattleshipHandler(object):
 
         # 4. Apply the transaction
         if action == "create":
+            board = "---------"
+            state = "P1-NEXT"
+            player1 = ""
+            player2 = ""
 
-            game = state_store[self._name].copy()
+            # game = state_store[self._name].copy()
+        elif action == "join":
+            # Assign players if new game
+            if player1 == "":
+                player1 = player
 
-            # If this is the first JOIN, set HashedBoard1 and Player1 in the
-            # store.  if this is the second JOIN, set HashedBoard2 and
-            # Player2 in the store.  Also, initialize TargetBoard1 and
-            # TargetBoard2 as empty.
-            if 'Player1' not in game:
-                game['HashedBoard1'] = self._board
-                size = len(self._board)
-                game['TargetBoard1'] = [['?'] * size for _ in range(size)]
-                game['Player1'] = self.OriginatorID
+            elif player2 == "":
+                player2 = player
+
+            # Verify player identity and take space
+            lboard = list(board)
+
+            size = len(board)
+            target_board = [['?'] * size for _ in range(size)]
+
+
+            if state == "P1-NEXT" and player == player1:
+                lboard[space - 1] = "X"
+                state = "P2-NEXT"
+                target_board = "TargetBoard2"
+
+
+            elif state == "P2-NEXT" and player == player2:
+                lboard[space - 1] = "O"
+                state = "P1-NEXT"
+                target_board = "TargetBoard1"
+
             else:
-                game['HashedBoard2'] = self._board
-                size = len(self._board)
-                game['TargetBoard2'] = [['?'] * size for _ in range(size)]
-                game['Player2'] = self.OriginatorID
-
-                # Move to 'P1-NEXT' as both boards have been entered.
-                game["State"] = 'P1-NEXT'
-
-            state_store[self._name] = game
-        elif self._action == 'FIRE':
-            game = state_store[self._name].copy()
-
-            # Reveal the previously targeted space
-            if 'LastFireColumn' in game:
-                if game['State'] == 'P1-NEXT':
-                    target_board = 'TargetBoard2'
-                else:
-                    target_board = 'TargetBoard1'
-
-                col = ord(game['LastFireColumn']) - ord('A')
-                row = int(game['LastFireRow']) - 1
-                if self._reveal_space != '-':
-                    game[target_board][row][col] = 'H'
-                else:
-                    game[target_board][row][col] = 'M'
-
-                # calculate number of hits for later determination
-                # of win
-                number_of_hits = sum(sum([1 if space == 'H' else 0
-                                          for space in row])
-                                     for row in game[target_board])
-            else:
-                number_of_hits = None
-
-            # Update LastFireColumn and LastFireRow in the store so
-            # they can be used in the next transaction.
-            game['LastFireColumn'] = self._column
-            game['LastFireRow'] = self._row
-
-            # if the game has been won, change the State
-            # to P1-WIN or P2-WIN as appropriate
-            total_ship_spaces = sum([len(ship) for ship in game['Ships']])
-            if number_of_hits is not None and \
-                            total_ship_spaces == number_of_hits:
-                if target_board == 'TargetBoard2':
-                    game['State'] = 'P2-WIN'
-                else:
-                    game['State'] = 'P1-WIN'
-
-            if game['State'] == 'P1-NEXT':
-                game['State'] = 'P2-NEXT'
-            elif game['State'] == 'P2-NEXT':
-                game['State'] = 'P1-NEXT'
-
-            state_store[self._name] = game
-        else:
-            raise InvalidTransaction(
-                "invalid state: {}".format(state_store[self._name].copy))
+                raise InvalidTransaction(
+                    "Not this player's turn: {}".format(player[:6])
+                )
+            board = "".join(lboard)
 
 
-def _is_win(board, letter):
-    wins = ((1, 2, 3), (4, 5, 6), (7, 8, 9),
-            (1, 4, 7), (2, 5, 8), (3, 6, 9),
-            (1, 5, 9), (3, 5, 7))
-
-    for win in wins:
-        if (board[win[0] - 1] == letter
-            and board[win[1] - 1] == letter
-            and board[win[2] - 1] == letter):
-            return True
-    return False
 
 
-def _game_data_to_str(board, state, player1, player2, name):
-    board = list(board.replace("-", " "))
-    out = ""
-    out += "GAME: {}\n".format(name)
-    out += "PLAYER 1: {}\n".format(player1[:6])
-    out += "PLAYER 2: {}\n".format(player2[:6])
-    out += "STATE: {}\n".format(state)
-    out += "\n"
-    out += "{} | {} | {}\n".format(board[0], board[1], board[2])
-    out += "---|---|---\n"
-    out += "{} | {} | {}\n".format(board[3], board[4], board[5])
-    out += "---|---|---\n"
-    out += "{} | {} | {}".format(board[6], board[7], board[8])
-    return out
+# def _is_win(board, letter):
 
 
-def _display(msg):
-    n = msg.count("\n")
+# def _game_data_to_str(board, state, player1, player2, name):
 
-    if n > 0:
-        msg = msg.split("\n")
-        length = max(len(line) for line in msg)
-    else:
-        length = len(msg)
-        msg = [msg]
 
-    print("+" + (length + 2) * "-" + "+")
-    for line in msg:
-        print("+ " + line.center(length) + " +")
-    print("+" + (length + 2) * "-" + "+")
+
+# def _display(msg):
+
