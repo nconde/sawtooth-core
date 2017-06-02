@@ -223,7 +223,6 @@ class TestPoetBlockPublisher(TestCase):
                 config_dir=self._temp_dir,
                 validator_id='validator_deadbeef')
 
-
         with mock.patch('sawtooth_poet.poet_consensus.'
                         'poet_block_publisher.json') as _:
             self.assertTrue(block_publisher.finalize_block(
