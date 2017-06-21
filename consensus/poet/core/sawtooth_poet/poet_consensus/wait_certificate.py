@@ -89,6 +89,7 @@ class WaitCertificate(object):
                 ValueError(
                     'Failed to create an enclave wait certificate')
 
+        print('returning wait_certificate!')
         return cls(enclave_certificate)
 
     @classmethod
@@ -137,11 +138,13 @@ class WaitCertificate(object):
             enclave_certificate.previous_certificate_id
         self.local_mean = enclave_certificate.local_mean
         self.request_time = enclave_certificate.request_time
+        print("enclave_request_time: ", enclave_certificate.request_time)
         self.duration = enclave_certificate.duration
         self.validator_address = enclave_certificate.validator_address
         self.block_hash = enclave_certificate.block_hash
         self.signature = enclave_certificate.signature
         self.identifier = enclave_certificate.identifier()
+
 
         # we cannot hold the certificate because it cannot be pickled for
         # storage in the transaction block array
@@ -195,7 +198,10 @@ class WaitCertificate(object):
         expected_mean = \
             consensus_state.compute_local_mean(
                 poet_settings_view=poet_settings_view)
+        print("expected_mean: ", expected_mean)
 
+        print("enclave_certificate.prev_blk_id: ", enclave_certificate.previous_certificate_id)
+        print("poet_settings_view: ", poet_settings_view)
         if enclave_certificate.duration < poet_settings_view.minimum_wait_time:
             raise \
                 ValueError(
@@ -215,6 +221,7 @@ class WaitCertificate(object):
 
         if enclave_certificate.previous_certificate_id != \
                 previous_certificate_id:
+            print("previous_certificate_id: ", previous_certificate_id)
             raise \
                 ValueError(
                     'Previous certificate ID does not match: {0} != '

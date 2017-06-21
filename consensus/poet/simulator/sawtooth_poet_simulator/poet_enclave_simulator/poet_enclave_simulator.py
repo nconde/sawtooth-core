@@ -472,6 +472,7 @@ class _PoetEnclaveSimulator(object):
 
     @classmethod
     def verify_wait_certificate(cls, certificate, poet_public_key):
+        print("in verify_wait_cerf")
         # Since the signing module uses a hex-encoded string as the canonical
         # format for public keys and we should be handed a public key that was
         # part of signup information created by us, don't bother decoding
@@ -481,6 +482,7 @@ class _PoetEnclaveSimulator(object):
                 certificate.serialize(),
                 certificate.signature,
                 poet_public_key):
+            print("Error in verify_wait_cerf")
             raise ValueError('Wait certificate signature does not match')
 
 

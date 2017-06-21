@@ -64,6 +64,7 @@ class EnclaveWaitCertificate(object):
         Returns:
             An EnclaveWaitCertificate object
         """
+        print("returning enclave_wait_certf")
         return \
             EnclaveWaitCertificate(
                 duration=wait_timer.duration,
